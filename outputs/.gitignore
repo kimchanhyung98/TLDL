@@ -1,0 +1,30 @@
+# Ignore all files in this directory
+*
+
+# Except for these files
+!.gitignore
+!README.md
+
+# Text and document outputs - UNCOMMENT to track these files
+# !*.txt
+# !*.md
+# !*.markdown
+# !*.rst
+# !*.html
+# !*.htm
+# !*.pdf
+# !*.docx
+# !*.doc
+
+# Ignore specific output directories
+# Uncomment if you want to track specific subdirectories
+# !figures/
+# !models/
+# !visualizations/
+
+# Ignore temporary files
+*.tmp
+*~
+._*
+~$*
+.~lock.*
