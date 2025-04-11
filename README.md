@@ -1,4 +1,4 @@
-# Too Long; Didn't Read
+# Too Long; Didn't Listen
 
 OpenAI API(whisper, o1)를 활용하여 오디오 파일 처리(음성 텍스트 변환, 요약/정리)를 자동화하고   
 이를 기존 자료(PDF, 교과서 등)와 통합하여 과제 수행을 지원하는 프로젝트
