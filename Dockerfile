@@ -20,14 +20,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # 프로젝트 파일 복사 (환경 변수 및 설정 파일 포함)
 COPY . .
 
-# PyTorch CPU 버전 및 기본 의존성 설치
+# 기본 의존성 설치
+RUN pip install --no-cache-dir -r requirements.txt
+
+# PyTorch CPU 버전 설치 (최신 버전 사용)
 RUN pip install --no-cache-dir \
-    torch==2.0.1 \
-    torchvision==0.15.2 \
-    torchaudio==2.0.2 \
-    --extra-index-url https://download.pytorch.org/whl/cpu \
-    && pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir git+https://github.com/openai/whisper.git
+    torch \
+    torchvision \
+    torchaudio \
+    --extra-index-url https://download.pytorch.org/whl/cpu
+
+# 추가 패키지 설치
+RUN pip install --upgrade setuptools wheel
+
+# Whisper 설치
+RUN pip install --no-cache-dir git+https://github.com/openai/whisper.git
 
 # 데이터와 결과물 디렉토리는 .dockerignore에 의해 이미지에 포함되지 않음
 # 볼륨 마운트를 위한 디렉토리 생성
