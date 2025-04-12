@@ -1,0 +1,75 @@
+# Ignore all files in this directory
+# *
+
+# Except for these files
+!.gitignore
+!README.md
+
+# Lecture materials - audio files
+*.mp3
+*.wav
+*.ogg
+*.flac
+*.m4a
+*.aac
+
+# Lecture materials - image files
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.bmp
+*.tiff
+*.svg
+
+# Lecture materials - document files
+*.pdf
+*.doc
+*.docx
+*.ppt
+*.pptx
+*.xls
+*.xlsx
+
+# Data file formats
+*.csv
+*.tsv
+*.json
+*.jsonl
+*.xml
+*.yaml
+*.yml
+*.parquet
+*.feather
+*.pickle
+*.pkl
+*.h5
+*.hdf5
+*.sqlite
+*.db
+
+# Compressed files
+*.zip
+*.tar
+*.gz
+*.bz2
+*.7z
+*.rar
+
+# Ignore temporary files
+*.tmp
+*~
+._*
+~$*
+# MS Office temporary files
+~$*.docx
+~$*.xlsx
+~$*.pptx
+~$*.doc
+~$*.xls
+~$*.ppt
+.~lock.*
+
+# Ignore large files (>100MB)
+# Use Git LFS if you need to track large files
+# https://git-lfs.github.com/
