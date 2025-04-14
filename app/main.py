@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
-import json
 from datetime import datetime
 from pathlib import Path
 
 from openai import OpenAI
 
-from app.config import OPENAI_API_KEY
+from app.config import OPENAI_API_KEY, WHISPER_MODEL, SUMMARY_MODEL
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 DATA_DIR = Path("/app/data")
@@ -33,95 +32,179 @@ def transcribe_audio(audio_file):
         audio_file (Path): 전사할 오디오 파일 경로
 
     Returns:
-        openai.types.Transcription: API에서 반환한 전사 결과
+        tuple: (text_transcript, srt_transcript) - 텍스트 전사본과 SRT 형식의 대본
 
     Raises:
         Exception: API 호출 중 오류 발생 시
     """
-    print(f"전사 시작: {audio_file.name}")
+    print(f"오디오 파일 처리 시작: {audio_file.name}")
 
+    # 텍스트 전사본 가져오기
     with open(audio_file, "rb") as audio:
-        transcript = client.audio.transcriptions.create(
-            model="whisper-1",
+        text_transcript = client.audio.transcriptions.create(
+            model=WHISPER_MODEL,
             file=audio,
-            response_format="verbose_json"
+            response_format="text"
         )
 
-    print(f"전사 완료: {audio_file.name}")
-    return transcript
+    # 시간이 표기된 SRT 형식 가져오기
+    with open(audio_file, "rb") as audio:
+        srt_transcript = client.audio.transcriptions.create(
+            model=WHISPER_MODEL,
+            file=audio,
+            response_format="srt"
+        )
+
+    print(f"오디오 파일 처리 완료: {audio_file.name}")
+    return text_transcript, srt_transcript
 
 
-def save_transcription(transcript, audio_file):
+def save_transcription(transcripts, audio_file):
     """전사 결과를 파일로 저장합니다.
 
-    다음 세 가지 파일을 저장합니다:
+    다음 파일들을 저장합니다:
     1. 전체 전사 내용이 포함된 텍스트 파일
-    2. 각 세그먼트별 타임스태프가 포함된 대본 파일
-    3. API 응답 전체가 포함된 JSON 파일
+    2. 시간이 표기된 SRT 형식의 대본 파일
+    3. 중요 내용 추출 파일
+    4. 요약 파일
 
     Args:
-        transcript (openai.types.Transcription): API에서 반환한 전사 결과
+        transcripts (tuple): (text_transcript, srt_transcript) - 텍스트 전사본과 SRT 형식의 대본
         audio_file (Path): 원본 오디오 파일 경로
 
     Returns:
-        tuple[Path, Path, Path]: 저장된 파일 경로들 (text_file, transcript_file, json_file)
+        tuple[Path, Path, Path, Path]: 저장된 파일 경로들 (text_file, srt_file, important_file, summary_file)
 
     Raises:
         IOError: 파일 저장 중 오류 발생 시
     """
+    text_transcript, srt_transcript = transcripts
     base_name = audio_file.stem
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # 기본 텍스트 파일로 저장 (전체 내용)
     text_file = OUTPUT_DIR / f"{base_name}_{timestamp}.txt"
     with open(text_file, "w", encoding="utf-8") as f:
-        f.write(transcript.text)
-
-    # 타임스탬프가 포함된 대본 형식으로 저장
-    transcript_file = OUTPUT_DIR / f"{base_name}_{timestamp}_transcript.txt"
-    with open(transcript_file, "w", encoding="utf-8") as f:
-        # 세그먼트가 있는 경우
-        if hasattr(transcript, 'segments') and transcript.segments:
-            for i, segment in enumerate(transcript.segments):
-                start_time = format_timestamp(segment.start)
-                end_time = format_timestamp(segment.end)
-
-                # 세그먼트 번호, 시작/종료 시간, 텍스트 형식으로 출력
-                f.write(f"[{i + 1}] [{start_time} --> {end_time}]\n{segment.text}\n\n")
-        else:
-            # 세그먼트가 없는 경우 전체 텍스트만 출력
-            f.write(transcript.text)
-
-    # JSON 파일로 저장
-    json_file = OUTPUT_DIR / f"{base_name}_{timestamp}.json"
-    with open(json_file, "w", encoding="utf-8") as f:
-        json.dump(transcript.model_dump(), f, ensure_ascii=False, indent=2)
-
+        f.write(text_transcript)
     print(f"텍스트 파일 저장 완료: {text_file}")
-    print(f"타임스탬프 포함 대본 저장 완료: {transcript_file}")
-    return text_file, transcript_file, json_file
+
+    # SRT 형식의 대본 파일 저장
+    srt_file = OUTPUT_DIR / f"{base_name}_{timestamp}.srt"
+    with open(srt_file, "w", encoding="utf-8") as f:
+        f.write(srt_transcript)
+    print(f"SRT 형식 대본 파일 저장 완료: {srt_file}")
+
+    # 중요 내용 추출 및 저장
+    important_content = extract_important_content(text_transcript)
+    important_file = OUTPUT_DIR / f"{base_name}_{timestamp}_important.txt"
+    with open(important_file, "w", encoding="utf-8") as f:
+        f.write("# 강의 중요 내용 추출\n\n")
+        f.write(important_content)
+    print(f"중요 내용 추출 파일 저장 완료: {important_file}")
+
+    # 요약 생성 및 저장
+    summary = summarize_transcript(text_transcript)
+    summary_file = OUTPUT_DIR / f"{base_name}_{timestamp}_summary.txt"
+    with open(summary_file, "w", encoding="utf-8") as f:
+        f.write("# 강의 요약\n\n")
+        f.write(summary)
+    print(f"요약 파일 저장 완료: {summary_file}")
+
+    return text_file, srt_file, important_file, summary_file
 
 
-def format_timestamp(seconds):
-    """초 단위 시간을 HH:MM:SS 형식으로 변환합니다.
+def extract_important_content(transcript_text):
+    """대본에서 중요 내용을 추출합니다.
+
+    시험, 과제, 중요 공지사항 등 학업에 중요한 정보를 추출합니다.
 
     Args:
-        seconds (float): 초 단위 시간
+        transcript_text (str): 전사된 대본 텍스트
 
     Returns:
-        str: HH:MM:SS 형식의 시간 문자열 (00:00:00)
+        str: 추출된 중요 내용
     """
-    hours = int(seconds // 3600)
-    minutes = int((seconds % 3600) // 60)
-    seconds = int(seconds % 60)
-    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+    print("중요 내용 추출 시작...")
+
+    # 중요 내용 추출을 위한 프롬프트
+    prompt = """
+    다음은 강의 대본입니다. 이 대본에서 다음과 같은 중요한 내용을 추출해주세요:
+
+    1. 시험 관련 정보 (시험 날짜, 범위, 형식, 주의사항 등)
+    2. 과제 관련 정보 (제출 기한, 형식, 주제, 요구사항 등)
+    3. 중요한 공지사항이나 특이사항
+    4. 교수가 특별히 강조한 개념이나 내용
+    5. 수업 참여나 출석에 관한 중요 정보
+
+    각 항목별로 정리하고, 해당 내용이 없으면 '해당 정보 없음'이라고 표시해주세요.
+    정보를 추출할 때 가능한 원문의 표현을 유지하고, 시간 정보나 구체적인 지시사항이 있다면 반드시 포함해주세요.
+
+    강의 대본:
+    {transcript_text}
+    """
+
+    # OpenAI API를 사용하여 중요 내용 추출
+    response = client.chat.completions.create(
+        model=SUMMARY_MODEL,
+        messages=[
+            {"role": "system", "content": "당신은 학생들을 위한 강의 내용 분석 도우미입니다. 강의 대본에서 학업에 중요한 정보를 정확하게 추출하는 역할을 합니다."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.3,  # 낮은 temperature로 일관된 결과 유도
+    )
+
+    important_content = response.choices[0].message.content.strip()
+    print("중요 내용 추출 완료")
+    return important_content
+
+
+def summarize_transcript(transcript_text):
+    """대본 내용을 요약합니다.
+
+    Args:
+        transcript_text (str): 전사된 대본 텍스트
+
+    Returns:
+        str: 요약된 내용
+    """
+    print("대본 요약 시작...")
+
+    # 요약을 위한 프롬프트
+    prompt = """
+    다음은 강의 대본입니다. 이 대본의 주요 내용을 간결하게 요약해주세요.
+    요약은 다음 형식을 따라주세요:
+
+    1. 강의 주제 및 목표
+    2. 주요 논의 내용 (핵심 개념, 이론, 사례 등)
+    3. 결론 및 핵심 메시지
+
+    요약은 원래 내용의 10~15% 정도 분량으로 작성하고, 중요한 용어나 개념은 그대로 유지해주세요.
+
+    강의 대본:
+    {transcript_text}
+    """
+
+    # OpenAI API를 사용하여 요약 생성
+    response = client.chat.completions.create(
+        model=SUMMARY_MODEL,
+        messages=[
+            {"role": "system", "content": "당신은 학술 내용을 명확하고 간결하게 요약하는 전문가입니다. 강의 내용의 핵심을 유지하면서 불필요한 세부사항은 제외하여 요약합니다."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.3,  # 낮은 temperature로 일관된 결과 유도
+    )
+
+    summary = response.choices[0].message.content.strip()
+    print("대본 요약 완료")
+    return summary
 
 
 def process_all_files():
     """data 디렉토리의 모든 오디오 파일을 처리합니다.
 
     Returns:
-        list[tuple[Path, tuple[Path, Path, Path]]]: 처리된 파일 목록. 각 항목은 (오디오 파일, 출력 파일들) 형태
+        list[tuple[Path, tuple[Path, Path, Path, Path]]]: 처리된 파일 목록. 각 항목은 (오디오 파일, 출력 파일들) 형태
+        출력 파일들은 (text_file, srt_file, important_file, summary_file) 형태
 
     Raises:
         Exception: 파일 처리 중 오류 발생 시
@@ -137,8 +220,8 @@ def process_all_files():
     results = []
     for audio_file in audio_files:
         try:
-            transcript = transcribe_audio(audio_file)
-            output_files = save_transcription(transcript, audio_file)
+            transcripts = transcribe_audio(audio_file)
+            output_files = save_transcription(transcripts, audio_file)
             results.append((audio_file, output_files))
             print(f"{audio_file.name} 처리 완료")
         except Exception as e:
