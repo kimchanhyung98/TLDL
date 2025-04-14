@@ -5,7 +5,7 @@ from pathlib import Path
 
 from openai import OpenAI
 
-from app.config import OPENAI_API_KEY, WHISPER_MODEL
+from app.config import OPENAI_API_KEY, WHISPER_MODEL, SUMMARY_MODEL
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 DATA_DIR = Path("/app/data")
@@ -65,13 +65,15 @@ def save_transcription(transcripts, audio_file):
     다음 파일들을 저장합니다:
     1. 전체 전사 내용이 포함된 텍스트 파일
     2. 시간이 표기된 SRT 형식의 대본 파일
+    3. 중요 내용 추출 파일
+    4. 요약 파일
 
     Args:
         transcripts (tuple): (text_transcript, srt_transcript) - 텍스트 전사본과 SRT 형식의 대본
         audio_file (Path): 원본 오디오 파일 경로
 
     Returns:
-        tuple[Path, Path]: 저장된 파일 경로들 (text_file, srt_file)
+        tuple[Path, Path, Path, Path]: 저장된 파일 경로들 (text_file, srt_file, important_file, summary_file)
 
     Raises:
         IOError: 파일 저장 중 오류 발생 시
@@ -92,15 +94,117 @@ def save_transcription(transcripts, audio_file):
         f.write(srt_transcript)
     print(f"SRT 형식 대본 파일 저장 완료: {srt_file}")
 
-    return text_file, srt_file
+    # 중요 내용 추출 및 저장
+    important_content = extract_important_content(text_transcript)
+    important_file = OUTPUT_DIR / f"{base_name}_{timestamp}_important.txt"
+    with open(important_file, "w", encoding="utf-8") as f:
+        f.write("# 강의 중요 내용 추출\n\n")
+        f.write(important_content)
+    print(f"중요 내용 추출 파일 저장 완료: {important_file}")
+
+    # 요약 생성 및 저장
+    summary = summarize_transcript(text_transcript)
+    summary_file = OUTPUT_DIR / f"{base_name}_{timestamp}_summary.txt"
+    with open(summary_file, "w", encoding="utf-8") as f:
+        f.write("# 강의 요약\n\n")
+        f.write(summary)
+    print(f"요약 파일 저장 완료: {summary_file}")
+
+    return text_file, srt_file, important_file, summary_file
+
+
+def extract_important_content(transcript_text):
+    """대본에서 중요 내용을 추출합니다.
+
+    시험, 과제, 중요 공지사항 등 학업에 중요한 정보를 추출합니다.
+
+    Args:
+        transcript_text (str): 전사된 대본 텍스트
+
+    Returns:
+        str: 추출된 중요 내용
+    """
+    print("중요 내용 추출 시작...")
+
+    # 중요 내용 추출을 위한 프롬프트
+    prompt = """
+    다음은 강의 대본입니다. 이 대본에서 다음과 같은 중요한 내용을 추출해주세요:
+
+    1. 시험 관련 정보 (시험 날짜, 범위, 형식, 주의사항 등)
+    2. 과제 관련 정보 (제출 기한, 형식, 주제, 요구사항 등)
+    3. 중요한 공지사항이나 특이사항
+    4. 교수가 특별히 강조한 개념이나 내용
+    5. 수업 참여나 출석에 관한 중요 정보
+
+    각 항목별로 정리하고, 해당 내용이 없으면 '해당 정보 없음'이라고 표시해주세요.
+    정보를 추출할 때 가능한 원문의 표현을 유지하고, 시간 정보나 구체적인 지시사항이 있다면 반드시 포함해주세요.
+
+    강의 대본:
+    {transcript_text}
+    """
+
+    # OpenAI API를 사용하여 중요 내용 추출
+    response = client.chat.completions.create(
+        model=SUMMARY_MODEL,
+        messages=[
+            {"role": "system", "content": "당신은 학생들을 위한 강의 내용 분석 도우미입니다. 강의 대본에서 학업에 중요한 정보를 정확하게 추출하는 역할을 합니다."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.3,  # 낮은 temperature로 일관된 결과 유도
+    )
+
+    important_content = response.choices[0].message.content.strip()
+    print("중요 내용 추출 완료")
+    return important_content
+
+
+def summarize_transcript(transcript_text):
+    """대본 내용을 요약합니다.
+
+    Args:
+        transcript_text (str): 전사된 대본 텍스트
+
+    Returns:
+        str: 요약된 내용
+    """
+    print("대본 요약 시작...")
+
+    # 요약을 위한 프롬프트
+    prompt = """
+    다음은 강의 대본입니다. 이 대본의 주요 내용을 간결하게 요약해주세요.
+    요약은 다음 형식을 따라주세요:
+
+    1. 강의 주제 및 목표
+    2. 주요 논의 내용 (핵심 개념, 이론, 사례 등)
+    3. 결론 및 핵심 메시지
+
+    요약은 원래 내용의 10~15% 정도 분량으로 작성하고, 중요한 용어나 개념은 그대로 유지해주세요.
+
+    강의 대본:
+    {transcript_text}
+    """
+
+    # OpenAI API를 사용하여 요약 생성
+    response = client.chat.completions.create(
+        model=SUMMARY_MODEL,
+        messages=[
+            {"role": "system", "content": "당신은 학술 내용을 명확하고 간결하게 요약하는 전문가입니다. 강의 내용의 핵심을 유지하면서 불필요한 세부사항은 제외하여 요약합니다."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.3,  # 낮은 temperature로 일관된 결과 유도
+    )
+
+    summary = response.choices[0].message.content.strip()
+    print("대본 요약 완료")
+    return summary
 
 
 def process_all_files():
     """data 디렉토리의 모든 오디오 파일을 처리합니다.
 
     Returns:
-        list[tuple[Path, tuple[Path, Path]]]: 처리된 파일 목록. 각 항목은 (오디오 파일, 출력 파일들) 형태
-        출력 파일들은 (text_file, srt_file) 형태
+        list[tuple[Path, tuple[Path, Path, Path, Path]]]: 처리된 파일 목록. 각 항목은 (오디오 파일, 출력 파일들) 형태
+        출력 파일들은 (text_file, srt_file, important_file, summary_file) 형태
 
     Raises:
         Exception: 파일 처리 중 오류 발생 시
