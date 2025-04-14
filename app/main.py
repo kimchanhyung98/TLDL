@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
-import json
 from datetime import datetime
 from pathlib import Path
 
 from openai import OpenAI
 
-from app.config import OPENAI_API_KEY
+from app.config import OPENAI_API_KEY, WHISPER_MODEL
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 DATA_DIR = Path("/app/data")
@@ -33,95 +32,75 @@ def transcribe_audio(audio_file):
         audio_file (Path): 전사할 오디오 파일 경로
 
     Returns:
-        openai.types.Transcription: API에서 반환한 전사 결과
+        tuple: (text_transcript, srt_transcript) - 텍스트 전사본과 SRT 형식의 대본
 
     Raises:
         Exception: API 호출 중 오류 발생 시
     """
-    print(f"전사 시작: {audio_file.name}")
+    print(f"오디오 파일 처리 시작: {audio_file.name}")
 
+    # 텍스트 전사본 가져오기
     with open(audio_file, "rb") as audio:
-        transcript = client.audio.transcriptions.create(
-            model="whisper-1",
+        text_transcript = client.audio.transcriptions.create(
+            model=WHISPER_MODEL,
             file=audio,
-            response_format="verbose_json"
+            response_format="text"
         )
 
-    print(f"전사 완료: {audio_file.name}")
-    return transcript
+    # 시간이 표기된 SRT 형식 가져오기
+    with open(audio_file, "rb") as audio:
+        srt_transcript = client.audio.transcriptions.create(
+            model=WHISPER_MODEL,
+            file=audio,
+            response_format="srt"
+        )
+
+    print(f"오디오 파일 처리 완료: {audio_file.name}")
+    return text_transcript, srt_transcript
 
 
-def save_transcription(transcript, audio_file):
+def save_transcription(transcripts, audio_file):
     """전사 결과를 파일로 저장합니다.
 
-    다음 세 가지 파일을 저장합니다:
+    다음 파일들을 저장합니다:
     1. 전체 전사 내용이 포함된 텍스트 파일
-    2. 각 세그먼트별 타임스태프가 포함된 대본 파일
-    3. API 응답 전체가 포함된 JSON 파일
+    2. 시간이 표기된 SRT 형식의 대본 파일
 
     Args:
-        transcript (openai.types.Transcription): API에서 반환한 전사 결과
+        transcripts (tuple): (text_transcript, srt_transcript) - 텍스트 전사본과 SRT 형식의 대본
         audio_file (Path): 원본 오디오 파일 경로
 
     Returns:
-        tuple[Path, Path, Path]: 저장된 파일 경로들 (text_file, transcript_file, json_file)
+        tuple[Path, Path]: 저장된 파일 경로들 (text_file, srt_file)
 
     Raises:
         IOError: 파일 저장 중 오류 발생 시
     """
+    text_transcript, srt_transcript = transcripts
     base_name = audio_file.stem
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     # 기본 텍스트 파일로 저장 (전체 내용)
     text_file = OUTPUT_DIR / f"{base_name}_{timestamp}.txt"
     with open(text_file, "w", encoding="utf-8") as f:
-        f.write(transcript.text)
-
-    # 타임스탬프가 포함된 대본 형식으로 저장
-    transcript_file = OUTPUT_DIR / f"{base_name}_{timestamp}_transcript.txt"
-    with open(transcript_file, "w", encoding="utf-8") as f:
-        # 세그먼트가 있는 경우
-        if hasattr(transcript, 'segments') and transcript.segments:
-            for i, segment in enumerate(transcript.segments):
-                start_time = format_timestamp(segment.start)
-                end_time = format_timestamp(segment.end)
-
-                # 세그먼트 번호, 시작/종료 시간, 텍스트 형식으로 출력
-                f.write(f"[{i + 1}] [{start_time} --> {end_time}]\n{segment.text}\n\n")
-        else:
-            # 세그먼트가 없는 경우 전체 텍스트만 출력
-            f.write(transcript.text)
-
-    # JSON 파일로 저장
-    json_file = OUTPUT_DIR / f"{base_name}_{timestamp}.json"
-    with open(json_file, "w", encoding="utf-8") as f:
-        json.dump(transcript.model_dump(), f, ensure_ascii=False, indent=2)
-
+        f.write(text_transcript)
     print(f"텍스트 파일 저장 완료: {text_file}")
-    print(f"타임스탬프 포함 대본 저장 완료: {transcript_file}")
-    return text_file, transcript_file, json_file
 
+    # SRT 형식의 대본 파일 저장
+    srt_file = OUTPUT_DIR / f"{base_name}_{timestamp}.srt"
+    with open(srt_file, "w", encoding="utf-8") as f:
+        f.write(srt_transcript)
+    print(f"SRT 형식 대본 파일 저장 완료: {srt_file}")
 
-def format_timestamp(seconds):
-    """초 단위 시간을 HH:MM:SS 형식으로 변환합니다.
-
-    Args:
-        seconds (float): 초 단위 시간
-
-    Returns:
-        str: HH:MM:SS 형식의 시간 문자열 (00:00:00)
-    """
-    hours = int(seconds // 3600)
-    minutes = int((seconds % 3600) // 60)
-    seconds = int(seconds % 60)
-    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+    return text_file, srt_file
 
 
 def process_all_files():
     """data 디렉토리의 모든 오디오 파일을 처리합니다.
 
     Returns:
-        list[tuple[Path, tuple[Path, Path, Path]]]: 처리된 파일 목록. 각 항목은 (오디오 파일, 출력 파일들) 형태
+        list[tuple[Path, tuple[Path, Path]]]: 처리된 파일 목록. 각 항목은 (오디오 파일, 출력 파일들) 형태
+        출력 파일들은 (text_file, srt_file) 형태
 
     Raises:
         Exception: 파일 처리 중 오류 발생 시
@@ -137,8 +116,8 @@ def process_all_files():
     results = []
     for audio_file in audio_files:
         try:
-            transcript = transcribe_audio(audio_file)
-            output_files = save_transcription(transcript, audio_file)
+            transcripts = transcribe_audio(audio_file)
+            output_files = save_transcription(transcripts, audio_file)
             results.append((audio_file, output_files))
             print(f"{audio_file.name} 처리 완료")
         except Exception as e:
