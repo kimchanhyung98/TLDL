@@ -1,14 +1,14 @@
 # Too Long; Didn't Listen
 
-강의 녹음과 자료를 정리 및 요약
+Summarize and organize lecture recordings and materials
 
-## 개요
+## Overview
 
-OpenAI API를 활용하여 오디오 파일(강의 녹음 등)을 텍스트로 변환하고 강의 자료를 요약하여 중요 내용을 정리하는 도구입니다.
+A tool that uses OpenAI API to convert audio files (such as lecture recordings) to text and summarize lecture materials to extract important content.
 
-## 실행
+## Usage
 
-1. `.env` 파일 설정
+1. Set up `.env` file
 
 ```dotenv
 # OpenAI API key
@@ -19,21 +19,20 @@ SUMMARY_MODEL=o1
 WHISPER_MODEL=whisper-1
 ```
 
-2. `data` 디렉토리에 오디오 파일과 강의 자료 추가
+2. Add audio files and lecture materials to the `data` directory
 
-3. 실행
+3. Run the application
 
 ```bash
-# Docker로 실행
+# Run with Docker
 ./run.sh
 
-# 또는 Python으로 실행
-python -m app.main 
+# Or run with Python
+python -m app.main
 ```
 
-4. `outputs` 디렉토리에서 결과 확인
+4. Check results in the `outputs` directory
 
 ---
 
-
-<sub>~~과제가너무많아요~~</sub>
+<sub><del>과제하기싫다</del></sub>
