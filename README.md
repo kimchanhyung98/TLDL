@@ -1,13 +1,38 @@
 # Too Long; Didn't Listen
 
-OpenAI API(whisper, o1)를 활용하여 오디오 파일 처리(음성 텍스트 변환, 요약/정리)를 자동화하고   
-이를 기존 자료(PDF, 교과서 등)와 통합하여 과제 수행을 지원하는 프로젝트
+Summarize and organize lecture recordings and materials
 
-## 기능
+## Overview
 
-- 오디오 파일을 텍스트로 변환
-- 변환된 텍스트의 요약 및 중요 사항 정리
-- 생성된 요약/정리본과 사전 제공된 강의 자료, 교과서 데이터 등 통합
-- 통합된 정보를 바탕으로 과제 수행 시간 단축 및 초안 작성 등 보조
+A tool that uses OpenAI API to convert audio files (such as lecture recordings) to text and summarize lecture materials to extract important content.
 
-~~과제가너무많아요~~
+## Usage
+
+1. Set up `.env` file
+
+```dotenv
+# OpenAI API key
+OPENAI_API_KEY=
+
+# OpenAI Model
+SUMMARY_MODEL=o1
+WHISPER_MODEL=whisper-1
+```
+
+2. Add audio files and lecture materials to the `data` directory
+
+3. Run the application
+
+```bash
+# Run with Docker
+./run.sh
+
+# Or run with Python
+python -m app.main
+```
+
+4. Check results in the `outputs` directory
+
+---
+
+<sub><del>과제하기싫다</del></sub>
