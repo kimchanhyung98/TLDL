@@ -1,10 +1,10 @@
 class DocumentProcessor:
-    """문서 처리 기본 인터페이스"""
-    
+    """Base interface for document processing"""
+
     def process(self, file_path):
-        """문서 처리 메서드"""
+        """Document processing method"""
         raise NotImplementedError
-    
+
     def extract_text(self, file_path):
-        """문서에서 텍스트 추출"""
+        """Extract text from document"""
         raise NotImplementedError

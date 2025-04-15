@@ -1,8 +1,8 @@
 class TextPrompts:
-    """텍스트 분석용 프롬프트 관리 클래스"""
-    
+    """Class for managing text analysis prompts"""
+
     def get_important_content_prompt(self, text):
-        """중요 내용 추출 프롬프트"""
+        """Prompt for extracting important content"""
         return f"""
         다음은 강의 대본입니다. 이 대본에서 다음과 같은 중요한 내용을 추출해주세요:
 
@@ -18,9 +18,9 @@ class TextPrompts:
         강의 대본:
         {text}
         """
-    
+
     def get_summary_prompt(self, text):
-        """요약 프롬프트"""
+        """Prompt for summarizing content"""
         return f"""
         다음은 강의 대본입니다. 이 대본의 주요 내용을 간결하게 요약해주세요.
         요약은 다음 형식을 따라주세요:
