@@ -1,7 +1,7 @@
 from openai import OpenAI
 
 from app.config import OPENAI_API_KEY, SUMMARY_MODEL
-from app.text.prompts import TextPrompts
+from app.services.text.prompts import TextPrompts
 
 
 class TextAnalyzer:
