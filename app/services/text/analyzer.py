@@ -18,14 +18,14 @@ class TextAnalyzer:
 
         prompt = self.prompts.get_important_content_prompt(text)
 
+        # Temperature parameter is not supported with some models (like o1)
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
                 {"role": "system",
                  "content": "You are an assistant that helps students analyze lecture content. Your role is to accurately extract important information from lecture transcripts."},
                 {"role": "user", "content": prompt}
-            ],
-            temperature=0.3
+            ]
         )
 
         important_content = response.choices[0].message.content.strip()
@@ -38,14 +38,14 @@ class TextAnalyzer:
 
         prompt = self.prompts.get_summary_prompt(text)
 
+        # Temperature parameter is not supported with some models (like o1)
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
                 {"role": "system",
                  "content": "You are an expert at clearly and concisely summarizing academic content. You maintain the core of the lecture content while excluding unnecessary details."},
                 {"role": "user", "content": prompt}
-            ],
-            temperature=0.3
+            ]
         )
 
         summary = response.choices[0].message.content.strip()

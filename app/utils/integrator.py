@@ -149,14 +149,14 @@ class ContentIntegrator:
         {content[:25000]}  # Limit content length to avoid token limits
         """
 
+        # Temperature parameter is not supported with some models (like o1)
         response = self.client.chat.completions.create(
             model=self.summary_model,
             messages=[
                 {"role": "system",
                  "content": "You are an expert academic assistant that helps organize and structure lecture content in a clear, comprehensive manner using markdown formatting."},
                 {"role": "user", "content": prompt}
-            ],
-            temperature=0.3
+            ]
         )
 
         return response.choices[0].message.content

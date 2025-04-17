@@ -222,14 +222,14 @@ class PDFProcessor:
         {combined_content[:25000]}  # Limit content length to avoid token limits
         """
 
+        # Temperature parameter is not supported with some models (like o1)
         response = self.client.chat.completions.create(
             model=self.summary_model,
             messages=[
                 {"role": "system",
                  "content": "You are an expert academic assistant that helps students identify the most important information from lecture materials."},
                 {"role": "user", "content": prompt}
-            ],
-            temperature=0.3
+            ]
         )
 
         return response.choices[0].message.content
@@ -264,14 +264,14 @@ class PDFProcessor:
         {combined_content[:25000]}  # Limit content length to avoid token limits
         """
 
+        # Temperature parameter is not supported with some models (like o1)
         response = self.client.chat.completions.create(
             model=self.summary_model,
             messages=[
                 {"role": "system",
                  "content": "You are an expert academic assistant that helps students understand complex lecture materials by providing clear, comprehensive summaries."},
                 {"role": "user", "content": prompt}
-            ],
-            temperature=0.3
+            ]
         )
 
         return response.choices[0].message.content
