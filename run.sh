@@ -87,10 +87,12 @@ docker rm $(docker ps -a -q -f name=tldl-app) 2>/dev/null
 # Build and run
 echo -e "${GREEN}Building and running TLDL...${NC}"
 docker build -t tldl-app .
+
+# Run with appropriate mode - FIXED: pass mode as CMD argument
 docker run --name tldl-app \
     -v "$(pwd)/data:/app/data" \
     -v "$(pwd)/outputs:/app/outputs" \
-    tldl-app --mode "$mode"
+    tldl-app python -m app.main --mode "$mode"
 
 # Check result and cleanup
 if [ $? -eq 0 ]; then
