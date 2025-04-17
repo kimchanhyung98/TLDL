@@ -1,12 +1,12 @@
-import PyPDF2
 import base64
 import json
-import requests
+from pathlib import Path
+from typing import List, Dict, Any
+
+import PyPDF2
 from PIL import Image
 from openai import OpenAI
-from pathlib import Path
 from pdf2image import convert_from_path
-from typing import List, Dict, Any
 
 from app.config import OPENAI_API_KEY, SUMMARY_MODEL
 
@@ -20,11 +20,11 @@ class PDFProcessor:
 
     def process_pdf(self, pdf_path: str, output_dir: Path) -> Dict[str, Any]:
         """Process a PDF file and extract text, images, and analysis
-        
+
         Args:
             pdf_path: Path to the PDF file
             output_dir: Base output directory
-            
+
         Returns:
             Dict containing processing results
         """
@@ -111,10 +111,10 @@ class PDFProcessor:
 
     def extract_text(self, pdf_path: Path) -> str:
         """Extract text from a PDF file
-        
+
         Args:
             pdf_path: Path to the PDF file
-            
+
         Returns:
             Extracted text content
         """
@@ -135,10 +135,10 @@ class PDFProcessor:
 
     def convert_to_images(self, pdf_path: Path) -> List[Image.Image]:
         """Convert PDF to a list of images
-        
+
         Args:
             pdf_path: Path to the PDF file
-            
+
         Returns:
             List of PIL Image objects
         """
@@ -152,10 +152,10 @@ class PDFProcessor:
 
     def analyze_image(self, image_path: Path) -> str:
         """Analyze an image using GPT-4 Vision
-        
+
         Args:
             image_path: Path to the image file
-            
+
         Returns:
             Analysis text
         """
@@ -194,11 +194,11 @@ class PDFProcessor:
 
     def extract_important_content(self, text_content: str, page_analyses: List[Dict]) -> str:
         """Extract important content from text and page analyses
-        
+
         Args:
             text_content: Extracted text content
             page_analyses: List of page analysis results
-            
+
         Returns:
             Important content
         """
@@ -212,12 +212,12 @@ class PDFProcessor:
         prompt = f"""
         The following is content extracted from a lecture PDF, including both text and analysis of visual elements.
         Please identify and extract the most important content, focusing on:
-        
+
         1. Key concepts and definitions
         2. Important formulas and equations
         3. Critical information for exams or assignments
         4. Significant diagrams or visual elements and their meaning
-        
+
         Content:
         {combined_content[:25000]}  # Limit content length to avoid token limits
         """
@@ -236,11 +236,11 @@ class PDFProcessor:
 
     def summarize_content(self, text_content: str, page_analyses: List[Dict]) -> str:
         """Summarize content from text and page analyses
-        
+
         Args:
             text_content: Extracted text content
             page_analyses: List of page analysis results
-            
+
         Returns:
             Summary of content
         """
@@ -254,12 +254,12 @@ class PDFProcessor:
         prompt = f"""
         The following is content extracted from a lecture PDF, including both text and analysis of visual elements.
         Please provide a comprehensive summary that:
-        
+
         1. Outlines the main topics and concepts covered
         2. Explains key ideas in a clear, structured manner
         3. Preserves the logical flow of the lecture material
         4. Includes important formulas, diagrams, and their significance
-        
+
         Content:
         {combined_content[:25000]}  # Limit content length to avoid token limits
         """

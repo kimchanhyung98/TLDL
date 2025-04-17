@@ -1,7 +1,8 @@
 import re
-from openai import OpenAI
 from pathlib import Path
 from typing import Dict, Any
+
+from openai import OpenAI
 
 from app.config import OPENAI_API_KEY, SUMMARY_MODEL
 
@@ -15,11 +16,11 @@ class ContentIntegrator:
 
     def process_pdf_directory(self, directory_path: Path, output_dir: Path) -> Dict[str, Any]:
         """Process a PDF directory and consolidate important content
-        
+
         Args:
             directory_path: Path to the PDF directory (pdf-*)
             output_dir: Output directory for consolidated content
-            
+
         Returns:
             Dict containing processing results
         """
@@ -67,12 +68,12 @@ class ContentIntegrator:
 
     def process_lecture_images(self, lecture_name: str, output_dir: Path, base_dir: Path) -> Dict[str, Any]:
         """Process lecture images and consolidate important content
-        
+
         Args:
             lecture_name: Lecture name (prefix of image files)
             output_dir: Output directory for consolidated content
             base_dir: Base directory containing image directories
-            
+
         Returns:
             Dict containing processing results
         """
@@ -127,24 +128,24 @@ class ContentIntegrator:
 
     def consolidate_important_content(self, content: str, title: str) -> str:
         """Consolidate important content from multiple pages
-        
+
         Args:
             content: Combined important content from multiple pages
             title: Title or name of the content
-            
+
         Returns:
             Consolidated important content in markdown format
         """
         prompt = f"""
         The following contains important content extracted from multiple pages of lecture material titled "{title}".
         Please consolidate this into a well-structured, comprehensive document that:
-        
+
         1. Organizes information by topic rather than by page
         2. Eliminates redundancy while preserving all important points
         3. Presents information in a logical, hierarchical structure
         4. Uses markdown formatting for better readability (headings, lists, etc.)
         5. Highlights key concepts, formulas, and exam-relevant information
-        
+
         Content:
         {content[:25000]}  # Limit content length to avoid token limits
         """

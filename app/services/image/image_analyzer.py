@@ -1,8 +1,9 @@
 import base64
 import json
-from openai import OpenAI
 from pathlib import Path
 from typing import Dict, Any
+
+from openai import OpenAI
 
 from app.config import OPENAI_API_KEY, SUMMARY_MODEL
 
@@ -16,11 +17,11 @@ class ImageAnalyzer:
 
     def process_image(self, image_path: str, output_dir: Path) -> Dict[str, Any]:
         """Process an image file and generate analysis
-        
+
         Args:
             image_path: Path to the image file
             output_dir: Base output directory
-            
+
         Returns:
             Dict containing processing results
         """
@@ -71,10 +72,10 @@ class ImageAnalyzer:
 
     def analyze_image(self, image_path: Path) -> str:
         """Analyze an image using GPT-4 Vision
-        
+
         Args:
             image_path: Path to the image file
-            
+
         Returns:
             Analysis text
         """
@@ -113,22 +114,22 @@ class ImageAnalyzer:
 
     def extract_important_content(self, analysis: str) -> str:
         """Extract important content from image analysis
-        
+
         Args:
             analysis: Image analysis text
-            
+
         Returns:
             Important content
         """
         prompt = f"""
         The following is an analysis of a lecture slide or image.
         Please identify and extract the most important content, focusing on:
-        
+
         1. Key concepts and definitions
         2. Important formulas and equations
         3. Critical information for exams or assignments
         4. Significant diagrams or visual elements and their meaning
-        
+
         Analysis:
         {analysis}
         """
@@ -147,17 +148,17 @@ class ImageAnalyzer:
 
     def summarize_content(self, analysis: str) -> str:
         """Summarize content from image analysis
-        
+
         Args:
             analysis: Image analysis text
-            
+
         Returns:
             Summary of content
         """
         prompt = f"""
         The following is an analysis of a lecture slide or image.
         Please provide a concise summary that captures the main points and significance of this content.
-        
+
         Analysis:
         {analysis}
         """
