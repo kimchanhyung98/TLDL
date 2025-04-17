@@ -8,7 +8,7 @@ from PIL import Image
 from openai import OpenAI
 from pdf2image import convert_from_path
 
-from app.config import OPENAI_API_KEY, SUMMARY_MODEL
+from app.config import OPENAI_API_KEY, SUMMARY_MODEL, VISION_MODEL
 
 
 class PDFProcessor:
@@ -17,6 +17,7 @@ class PDFProcessor:
     def __init__(self, api_key=OPENAI_API_KEY):
         self.client = OpenAI(api_key=api_key)
         self.summary_model = SUMMARY_MODEL
+        self.vision_model = VISION_MODEL
 
     def process_pdf(self, pdf_path: str, output_dir: Path) -> Dict[str, Any]:
         """Process a PDF file and extract text, images, and analysis
@@ -165,9 +166,9 @@ class PDFProcessor:
                 image_data = image_file.read()
                 base64_image = base64.b64encode(image_data).decode('utf-8')
 
-            # Call GPT-4 Vision API
+            # Call Vision API
             response = self.client.chat.completions.create(
-                model="gpt-4-vision-preview",
+                model=self.vision_model,
                 messages=[
                     {
                         "role": "user",

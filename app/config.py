@@ -8,4 +8,5 @@ load_dotenv(dotenv_path=dotenv_path)
 
 WHISPER_MODEL = os.getenv("WHISPER_MODEL", "whisper-1")
 SUMMARY_MODEL = os.getenv("SUMMARY_MODEL", "o1")
+VISION_MODEL = os.getenv("VISION_MODEL", "gpt-4o")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
