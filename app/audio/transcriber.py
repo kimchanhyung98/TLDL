@@ -1,6 +1,5 @@
-from pathlib import Path
-
 from openai import OpenAI
+from pathlib import Path
 
 from app.config import OPENAI_API_KEY, WHISPER_MODEL
 

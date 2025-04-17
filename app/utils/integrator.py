@@ -1,8 +1,7 @@
 import re
+from openai import OpenAI
 from pathlib import Path
 from typing import Dict, Any
-
-from openai import OpenAI
 
 from app.config import OPENAI_API_KEY, SUMMARY_MODEL
 

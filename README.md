@@ -4,7 +4,8 @@ Summarize and organize lecture recordings and materials
 
 ## Overview
 
-A tool that uses OpenAI API to convert audio files (such as lecture recordings) to text and summarize lecture materials to extract important content.
+A tool that uses OpenAI API to convert audio files (such as lecture recordings) to text and summarize lecture materials
+to extract important content.
 
 ## Usage
 

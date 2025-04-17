@@ -1,13 +1,12 @@
+import PyPDF2
 import base64
 import json
-from pathlib import Path
-from typing import List, Dict, Any
-
-import PyPDF2
 import requests
 from PIL import Image
 from openai import OpenAI
+from pathlib import Path
 from pdf2image import convert_from_path
+from typing import List, Dict, Any
 
 from app.config import OPENAI_API_KEY, SUMMARY_MODEL
 
