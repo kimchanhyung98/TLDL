@@ -1,4 +1,10 @@
-class DocumentProcessor:
+"""
+Base interface for document processing.
+This is an abstract class that defines the interface for document processors.
+"""
+
+
+class DocumentInterface:
     """Base interface for document processing"""
 
     def process(self, file_path):

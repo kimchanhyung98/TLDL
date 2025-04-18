@@ -1,3 +1,3 @@
-from app.document.base import DocumentProcessor
+from app.processors.document_processor import DocumentProcessor
 
 __all__ = ['DocumentProcessor']
