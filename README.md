@@ -17,6 +17,7 @@ OPENAI_API_KEY=
 
 # OpenAI Model
 SUMMARY_MODEL=o1
+VISION_MODEL=gpt-4o
 WHISPER_MODEL=whisper-1
 ```
 
